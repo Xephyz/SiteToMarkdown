@@ -1,10 +1,22 @@
 ﻿using System.Text;
+
+using CommandLine;
+
 using HtmlAgilityPack;
 
-var baseUrl = args.Length > 0 ? args[0] : throw new ArgumentException("Please provide a URL.");
-if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
+using SiteToMarkdown;
+
+
+var parseResult = Parser.Default.ParseArguments<Options>(args);
+if (parseResult is not Parsed<Options> parsed)
 {
-    throw new ArgumentException($"Please provice a valid URL. Provided: {baseUrl}");
+    return;
+}
+
+var url = parsed.Value.Url;
+if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+{
+    throw new ArgumentException($"Please provice a valid URL. Provided: {url}");
 }
 
 var web = new HtmlWeb();
