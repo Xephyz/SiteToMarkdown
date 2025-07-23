@@ -62,8 +62,9 @@ while (pagesToScrape.Count > 0)
 
     foreach (var link in links)
     {
-        var url = link.GetAttributeValue("href", string.Empty);
-        if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out var result)
+        var href = link.GetAttributeValue("href", string.Empty);
+        if (string.IsNullOrEmpty(href)
+            || !Uri.TryCreate(href, UriKind.RelativeOrAbsolute, out var result)
             || !uri.IsBaseOf(result)
             || result.OriginalString == "/" // This feels like a hack...
             || IsOnlyFragment(result))
