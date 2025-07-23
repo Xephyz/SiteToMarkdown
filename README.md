@@ -96,7 +96,7 @@ This project is licensed under the MIT License.
 ## Credits
 
 - [HtmlAgilityPack](https://github.com/zzzprojects/html-agility-pack)
-- [ReverseMarkdown](https://github.com/mysticmind/reverse-markdown)
+- [ReverseMarkdown](https://github.com/mysticmind/reversemarkdown-net)
 
 ---
 
