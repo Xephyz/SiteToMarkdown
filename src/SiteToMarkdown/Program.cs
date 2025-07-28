@@ -13,13 +13,12 @@ if (parseResult is not Parsed<Options> parsed)
     return;
 }
 
-var url = parsed.Value.Url;
-if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+string urlArg = parsed.Value.Url;
+if (!Uri.TryCreate(urlArg, UriKind.Absolute, out var url))
 {
-    throw new ArgumentException($"Please provice a valid absolute URL. Provided: {url}");
+    throw new ArgumentException($"Please provice a valid absolute URL. Provided: {urlArg}");
 }
 
-var web = new HtmlWeb();
 var converter = new ReverseMarkdown.Converter(new ReverseMarkdown.Config
 {
     // Makes sure that we don't keep weird HTML tags that clutter the markdown file.
@@ -29,16 +28,16 @@ var converter = new ReverseMarkdown.Converter(new ReverseMarkdown.Config
     CleanupUnnecessarySpaces = false,
 });
 
-var markdownBuilder = new StringBuilder();
-var mdFilename = Utils.UriToMarkdownFileName(uri);
+var mdFilename = Utils.UriToMarkdownFileName(url);
 
-var docs = Utils.ScrapeUrl(web, uri);
+var web = new HtmlWeb();
+var docs = Utils.ScrapeUrl(web, url);
 var converted = docs
     .Select(static doc => doc.DocumentNode.InnerHtml)
     .Select(converter.Convert);
 
-markdownBuilder.Append(string.Join("\n\n", converted));
+var markdown = string.Join("\n\n", converted);
 
 using var writer = new StreamWriter(mdFilename, false, Encoding.UTF8);
-writer.Write(markdownBuilder.ToString());
-Console.WriteLine($"Wrote {markdownBuilder.Length} characters to {mdFilename}");
+writer.Write(markdown.ToString());
+Console.WriteLine($"Wrote {markdown.Length} characters to {mdFilename}");
