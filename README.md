@@ -1,3 +1,5 @@
+[![NuGet](https://img.shields.io/nuget/v/SiteToMarkdown?color=blue)](https://www.nuget.org/packages/SiteToMarkdown)
+
 # SiteToMarkdown
 
 SiteToMarkdown is a command-line utility written in C# (.NET 9) that crawls a website starting from a given URL, downloads its HTML content, and converts it into Markdown format. The tool recursively follows internal links, processes each page, and outputs a single Markdown file containing the combined content. This is useful for archiving, documentation, or transforming web-based documentation into Markdown for further editing or publishing.
