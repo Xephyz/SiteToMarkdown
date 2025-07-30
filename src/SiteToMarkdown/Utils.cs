@@ -36,10 +36,13 @@ public static class Utils
             return false;
         }
 
-        try {
+        try
+        {
             doc = web.Load(url);
             return true;
-        } catch {
+        }
+        catch
+        {
             return false;
         }
     }
@@ -58,7 +61,7 @@ public static class Utils
             return;
         }
 
-        foreach(var link in links)
+        foreach (var link in links)
         {
             var href = link.GetAttributeValue("href", string.Empty);
             if (string.IsNullOrEmpty(href)
@@ -83,6 +86,33 @@ public static class Utils
 
             pagesToScrape.Enqueue(result);
         }
+    }
+
+    public static HtmlDocument FilterHtmlTags(
+        HtmlDocument document,
+        IEnumerable<string> idFilters,
+        IEnumerable<string> classFilters)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        foreach (var idFilter in idFilters)
+        {
+            document.GetElementbyId(idFilter)?.Remove();
+        }
+
+        foreach (var classFilter in classFilters)
+        {
+            var nodes = document.DocumentNode.SelectNodes($"//*[contains(@class, '{classFilter}')]");
+            if (nodes is not null)
+            {
+                foreach (var node in nodes)
+                {
+                    node.Remove();
+                }
+            }
+        }
+
+        return document;
     }
 
     public static IEnumerable<HtmlDocument> ScrapeUrl(HtmlWeb web, Uri url)

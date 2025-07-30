@@ -1,5 +1,7 @@
 ﻿namespace SiteToMarkdown.Tests;
 
+using System.Diagnostics.CodeAnalysis;
+
 using FluentAssertions;
 
 using HtmlAgilityPack;
@@ -28,7 +30,29 @@ public class SiteToMarkdownTests
     }
 
     [Fact]
-    public void EnqueueRelevantLinks_AddsAllRelevantLinksToQueue_WhenNotFoundInSet()
+    public void FilterHtmlTags_RemovesAllDefinedHtmlTags()
+    {
+        // Arrange
+        var doc = new HtmlDocument();
+        doc.LoadHtml(TestSite);
+        List<string> idFilters = ["welcome"];
+        List<string> classFilters = ["menu"];
+
+        // Act
+        Utils.FilterHtmlTags(doc, idFilters, classFilters);
+
+        // Assert
+        doc.DocumentNode.SelectNodes("//aside").Should().BeNull();
+        doc.DocumentNode.SelectNodes("//h2").Should().BeNull();
+        doc.DocumentNode.SelectNodes("//nav").Should().BeNull();
+        doc.DocumentNode.SelectNodes("//ul").Should().BeNull();
+        doc.DocumentNode.SelectNodes("//li").Should().BeNull();
+        doc.DocumentNode.SelectNodes("//h1").Should().BeNull();
+        doc.DocumentNode.SelectNodes("//a").Should().HaveCount(9);
+    }
+
+    [Fact]
+    public void EnqueueRelevantLinks_AddsAllRelevantLinksToQueue_WhenNotFoundInSetOrFilteredOut()
     {
         // Arrange
         var doc = new HtmlDocument();
@@ -41,6 +65,7 @@ public class SiteToMarkdownTests
         var pagesToScrape = new Queue<Uri>();
 
         // Act
+        Utils.FilterHtmlTags(doc, ["welcome"], ["menu"]);
         Utils.EnqueueRelevantLinks(doc, url, pagesDiscovered, pagesToScrape);
 
         // Assert
@@ -70,22 +95,38 @@ public class SiteToMarkdownTests
     }
 
     private const string TestSiteUrl = "https://example.com/test/stuff";
+    [StringSyntax("Html")]
     private const string TestSite = """
         <!DOCTYPE html>
         <head><title>Test Site</title></head>
         <body>
             <div>
-                <h1>Welcome to the Test Site</h1>
-                <p>This is a paragraph on the test site.</p>
-                <a href="/">Home - Ignore</a>
-                <a href="https://example.com/test/page1">Page 1 - Include</a>
-                <a href="https://example.com/test/page2#Something">Page 2 - Include</a>
-                <a href="https://example.com/test/page3">Page 3 - Include</a>
-                <a href="/test/page4">Page 4 - Include</a>
-                <a href="/not-test/blog">Blog - Ignore</a>
-                <a href="https://example.com">Home page - Ignore</a>
-                <a href="https://different.com">Different Site - Ignore</a>
-                <a href="#section1">Section 1 - Ignore</a>
+                <aside class="menu thin-scrollbar">
+                    <h2 id="navigation" class="anchor">Test Site Navigation</h2>
+                    <nav>
+                        <ul>
+                            <li><a href="https://example.com/test/page1">Page 1</a></li>
+                            <li><a href="https://example.com/test/page2#Something">Page 2</a></li>
+                            <li><a href="https://example.com/test/page3">Page 3</a></li>
+                            <li><a href="/test/page4">Page 4</a></li>
+                        </ul>
+                    </nav>
+                </aside>
+                <main>
+                    <div>
+                        <h1 id="welcome" class="anchor">Welcome to the Test Site</h1>
+                        <p>This is a paragraph on the test site.</p>
+                        <a href="/">Home - Ignore</a>
+                        <a href="https://example.com/test/page1">Page 1 - Include</a>
+                        <a href="https://example.com/test/page2#Something">Page 2 - Include</a>
+                        <a href="https://example.com/test/page3">Page 3 - Include</a>
+                        <a href="/test/page4">Page 4 - Include</a>
+                        <a href="/not-test/blog">Blog - Ignore</a>
+                        <a href="https://example.com">Home page - Ignore</a>
+                        <a href="https://different.com">Different Site - Ignore</a>
+                        <a href="#section1">Section 1 - Ignore</a>
+                    </div>
+                </main>
             </div>
         </body>
         """;

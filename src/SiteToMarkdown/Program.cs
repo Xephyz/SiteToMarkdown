@@ -13,7 +13,8 @@ if (parseResult is not Parsed<Options> parsed)
     return;
 }
 
-string urlArg = parsed.Value.Url;
+var options = parsed.Value;
+string urlArg = options.Url;
 if (!Uri.TryCreate(urlArg, UriKind.Absolute, out var url))
 {
     throw new ArgumentException($"Please provice a valid absolute URL. Provided: {urlArg}");
@@ -31,7 +32,9 @@ var converter = new ReverseMarkdown.Converter(new ReverseMarkdown.Config
 var mdFilename = Utils.UriToMarkdownFileName(url);
 
 var web = new HtmlWeb();
-var docs = Utils.ScrapeUrl(web, url);
+var docs = Utils.ScrapeUrl(web, url)
+    .Select(doc => Utils.FilterHtmlTags(doc, options.IdFilters, options.ClassFilters));
+
 var converted = docs
     .Select(static doc => doc.DocumentNode.InnerHtml)
     .Select(converter.Convert);
