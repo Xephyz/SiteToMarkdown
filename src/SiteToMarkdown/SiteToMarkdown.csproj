@@ -12,6 +12,8 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>s2m</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
+    <RepositoryUrl>https://github.com/Xephyz/SiteToMarkdown</RepositoryUrl>
+    <PackageVersion>1.0.1</PackageVersion>
   </PropertyGroup>
   
   <PropertyGroup>
