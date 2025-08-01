@@ -115,7 +115,11 @@ public static class Utils
         return document;
     }
 
-    public static IEnumerable<HtmlDocument> ScrapeUrl(HtmlWeb web, Uri url)
+    public static IEnumerable<HtmlDocument> ScrapeUrl(HtmlWeb web, Uri url) =>
+        ScrapeSiteAndUrl(web, url)
+            .Select(static tuple => tuple.Item2);
+
+    public static IEnumerable<(Uri, HtmlDocument)> ScrapeSiteAndUrl(HtmlWeb web, Uri url)
     {
         ArgumentNullException.ThrowIfNull(web);
         ArgumentNullException.ThrowIfNull(url);
@@ -147,7 +151,71 @@ public static class Utils
             }
 
             EnqueueRelevantLinks(doc, url, pagesDiscovered, pagesToScrape);
-            yield return doc;
+            yield return (currentUrl, doc);
         }
+    }
+
+    public static List<HtmlDocument> ConvertLinks(IEnumerable<(Uri Url, HtmlDocument Doc)> values)
+    {
+        List<(Uri Url, HtmlDocument Doc, string markdownAnchor)> valuesList = values
+            .Select(x =>
+            {
+                var h1 = x.Doc.DocumentNode.SelectSingleNode("//h1");
+                if (h1 is null)
+                {
+                    return (x.Url, x.Doc, string.Empty);
+                }
+
+                var title = h1!.InnerText;
+                var titleAnchor = title
+                    .Trim()
+                    .Replace(' ', '-')
+                    .ToLowerInvariant();
+                var markdownAnchor = $"[{title}](#{titleAnchor})";
+
+                return (x.Url, x.Doc, markdownAnchor);
+            })
+            .ToList();
+
+        var anchorMap = valuesList
+            .Where(x => !string.IsNullOrEmpty(x.markdownAnchor))
+            .ToDictionary(
+                x => x.Url,
+                x => x.markdownAnchor);
+
+        foreach(var (url, doc, anchor) in valuesList)
+        {
+            anchorMap[new Uri(url.AbsolutePath, UriKind.RelativeOrAbsolute)] = anchor;
+        }
+
+        var docs = valuesList
+            .Select(static x => x.Doc)
+            .ToList();
+        foreach (var doc in docs)
+        {
+            var links = doc.DocumentNode.SelectNodes("//a[@href]");
+            if (links is null)
+            {
+                continue;
+            }
+
+            foreach (var link in links)
+            {
+                var href = link.GetAttributeValue("href", string.Empty);
+                if (string.IsNullOrEmpty(href)
+                    || !Uri.TryCreate(href, UriKind.RelativeOrAbsolute, out var result)
+                    || !anchorMap.TryGetValue(result, out var anchor))
+                {
+                    continue;
+                }
+
+                link.ParentNode.InsertBefore(
+                    HtmlNode.CreateNode($"<p>{anchor}</p>"),
+                    link);
+                link.Remove();
+            }
+        }
+
+        return docs;
     }
 }
