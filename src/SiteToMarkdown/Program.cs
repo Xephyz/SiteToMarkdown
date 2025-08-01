@@ -32,8 +32,18 @@ var converter = new ReverseMarkdown.Converter(new ReverseMarkdown.Config
 var mdFilename = Utils.UriToMarkdownFileName(url);
 
 var web = new HtmlWeb();
-var docs = Utils.ScrapeUrl(web, url)
-    .Select(doc => Utils.FilterHtmlTags(doc, options.IdFilters, options.ClassFilters));
+
+IEnumerable<HtmlDocument> docs;
+if (options.ConvertLinks)
+{
+    docs = Utils.ConvertLinks(Utils.ScrapeSiteAndUrl(web, url));
+}
+else
+{
+    docs = Utils.ScrapeUrl(web, url);
+}
+
+docs = docs.Select(doc => Utils.FilterHtmlTags(doc, options.IdFilters, options.ClassFilters));
 
 var converted = docs
     .Select(static doc => doc.DocumentNode.InnerHtml)

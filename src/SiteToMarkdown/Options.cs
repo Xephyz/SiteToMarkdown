@@ -12,4 +12,7 @@ public class Options
 
     [Option("filter-class", HelpText = "Ignores all HTML tags with the given classes", Separator = ',')]
     public IEnumerable<string> ClassFilters { get; set; } = [];
+
+    [Option('c', "convert-links", HelpText = "EXPERIMENTAL! Convert links to markdown format")]
+    public bool ConvertLinks { get; set; } = false;
 }
