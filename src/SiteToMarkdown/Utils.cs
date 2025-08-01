@@ -157,10 +157,15 @@ public static class Utils
 
     public static List<HtmlDocument> ConvertLinks(IEnumerable<(Uri Url, HtmlDocument Doc)> values)
     {
-        var valuesList = values
+        List<(Uri Url, HtmlDocument Doc, string markdownAnchor)> valuesList = values
             .Select(x =>
             {
                 var h1 = x.Doc.DocumentNode.SelectSingleNode("//h1");
+                if (h1 is null)
+                {
+                    return (x.Url, x.Doc, string.Empty);
+                }
+
                 var title = h1!.InnerText;
                 var titleAnchor = title
                     .Trim()
@@ -173,6 +178,7 @@ public static class Utils
             .ToList();
 
         var anchorMap = valuesList
+            .Where(x => !string.IsNullOrEmpty(x.markdownAnchor))
             .ToDictionary(
                 x => x.Url,
                 x => x.markdownAnchor);
