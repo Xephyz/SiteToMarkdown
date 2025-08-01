@@ -12,6 +12,8 @@ SiteToMarkdown is a command-line utility written in C# (.NET 9) that crawls a we
 - **Robust Error Handling**: Skips pages that fail to load and continues processing others.
 - **Customizable Markdown Conversion**: Configures ReverseMarkdown to bypass unknown HTML tags and preserve code blocks.
 - **.NET Tool Support**: Can be installed and run as a global or local .NET CLI tool using the command `s2m`.
+- **Advanced Filtering**: Supports filtering out HTML elements by their `id` or `class` attributes via command-line options.
+- **Experimental Link Conversion**: Optionally converts internal HTML links to Markdown anchor links for improved navigation in the output file.
 
 ## Requirements
 
@@ -73,33 +75,42 @@ You can also run the tool directly from the source:
 dotnet run --project ./src/SiteToMarkdown -- "https://example.com/docs"
 ```
 
-#### Arguments
+---
 
-- The only required argument is the **starting URL** (must be absolute).
-- The output file will be named based on the domain and path, e.g., `example.com.docs.md`, and will be created in the working directory.
+### Command-Line Arguments and Options
 
-#### Example
+| Argument / Option         | Description                                                                                      | Example                                      |
+|-------------------------- |--------------------------------------------------------------------------------------------------|----------------------------------------------|
+| `<Url>`                   | **(Required)** The absolute URL to begin scraping from.                                          | `https://openfga.dev/docs`                   |
+| `--filter-id`             | Comma-separated list of HTML element IDs to ignore (remove from output).                         | `--filter-id=sidebar,footer`                 |
+| `--filter-class`          | Comma-separated list of HTML classes to ignore (remove from output).                             | `--filter-class=ad-banner,nav`               |
+| `-c`, `--convert-links`   | **EXPERIMENTAL**: Convert internal HTML links to Markdown anchor links in the output.            | `-c` or `--convert-links`                    |
 
-Suppose you want to convert the documentation section of `https://openfga.dev/docs` to Markdown:
+
+#### Example: Filtering and Link Conversion
+
 ```powershell
-s2m "https://openfga.dev/docs"
+s2m "https://openfga.dev/docs" --filter-id=sidebar,footer --filter-class=ad-banner,nav -c
 ```
 
-or
+This command will:
+- Crawl all internal pages starting from the given URL.
+- Remove any HTML elements with IDs `sidebar` or `footer`.
+- Remove any HTML elements with classes `ad-banner` or `nav`.
+- Convert internal HTML links to Markdown anchor links.
+- Output the combined Markdown to a file named after the domain and path.
 
-```powershell
-dotnet run --project ./src/SiteToMarkdown -- "https://openfga.dev/docs"
-```
-
-This will produce a file like `openfga.dev.docs.md` containing the combined Markdown content of all discovered documentation pages.
+---
 
 ## How It Works
 
 1. **Initialization**: The program starts with a queue containing the base URL.
 2. **Crawling**: It loads each page using HtmlAgilityPack, converts the HTML to Markdown, and appends the result to a StringBuilder.
 3. **Link Discovery**: All `<a href="...">` links are discovered, normalized, and new internal links are added to the queue.
-4. **Recursion**: The process continues until all reachable pages are processed.
-5. **Output**: The final Markdown is written to a file named after the domain and path.
+4. **Filtering**: If specified, elements matching the provided IDs or classes are removed from the HTML before conversion.
+5. **Link Conversion**: If enabled, internal links are converted to Markdown anchor links for easier navigation in the output.
+6. **Recursion**: The process continues until all reachable pages are processed.
+7. **Output**: The final Markdown is written to a file named after the domain and path.
 
 ## Configuration (WIP, may be added as command-line options in the future)
 
@@ -111,15 +122,18 @@ You can modify these options in `Program.cs` to suit your needs.
 ## Limitations
 
 - Only internal links (same domain) are followed.
+- Fragment-only links (e.g., `#section`) and root (`/`) links are ignored.
 - The tool does **not** handle authentication, JavaScript-rendered content, or rate limiting.
 - Output is a single Markdown file; images and other assets are **not** downloaded.
 - Only the HTML content is converted; no CSS or JavaScript is processed.
+- The `--convert-links` feature is experimental and may not handle all edge cases.
 
 ## Extending
 
-- To support asset downloading (images, CSS), extend the crawler to fetch and save these files.
-- For multi-file output, modify the logic to write each page to a separate Markdown file.
-- Add support for command-line options to customize crawling depth, output location, or filtering.
+- **Asset Downloading**: To support downloading images, CSS, or other assets, extend the crawler to fetch and save these files.
+- **Multi-file Output**: Modify the logic to write each page to a separate Markdown file if desired.
+- **Additional Command-line Options**: Add support for more options to customize crawling depth, output location, filtering, etc.
+- **Authentication**: Implement support for authenticated sites if needed.
 
 ## Contributing
 
@@ -127,7 +141,7 @@ Contributions are welcome! Please open issues or submit pull requests for improv
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the [LICENSE](../../LICENSE) file for details.
 
 ## Credits
 
